@@ -1,0 +1,438 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vnetName": {
+            "defaultValue": "vnet-extended-home",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the VNet that will be used to extend the on-premises network."
+            }            
+        },    
+
+        "vnetCidr": {
+            "defaultValue": "192.168.3.0/24",
+            "type": "String",
+            "metadata": {
+                "description": "Size of the extended network. It should not overlap with the on-premises network."
+            }            
+        },         
+
+        "subnetMyVmsName": {
+            "defaultValue": "snet-myvms",
+            "type": "String",
+            "metadata": {
+                "description": "Subnet where VM workloads can be deployed to."
+            }                        
+        },            
+
+       
+        "subnetGatewayCidr": {
+            "defaultValue": "192.168.3.0/28",
+            "type": "String",
+            "metadata": {
+                "description": "Size of the GatewaySubnet. Must be at least /29" 
+            }                        
+        },                
+
+        "subnetMyVmsCidr": {
+            "defaultValue": "192.168.3.32/27",
+            "type": "String",
+            "metadata": {
+                "description": "Size of the VM subnet for test work loads" 
+            }
+        },              
+
+        "vgwName": {
+            "defaultValue": "vgw-devtest",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the Virtual Network Gateway" 
+            }
+        }, 
+
+        "vgwSku" : {
+            "defaultValue": "Basic",
+            "type": "string",
+            "allowedValues": ["Basic", "VpnGw1"],
+            "metadata": {
+                "description": "SKU size for the Virtual Network Gateway. The listed size are only for testing. 'Basic' is the most afforable but is limited in functionality and should be used for test purposes only." 
+            }
+        },
+
+        "pipVgwName": {
+            "defaultValue": "pip-vgw-devtest",
+            "type": "String",
+            "metadata": {
+                "description": "Name for the public IP resource that is associated with the VGW"
+            }                        
+        },              
+
+        "s2sTunnelName": {
+            "defaultValue": "s2s-devtest-home",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the site-to-site IPsec tunnel between Azure and the on-premises network."
+            }               
+        },
+
+        "ipSecSharedKey": {
+            "defaultValue": "YourSecureSharedIpSecKey",
+            "type": "String",
+            "metadata": {
+                "description": "Choose a IPsec shared key. This key will be required on both of sides of the connection." 
+            }            
+        },        
+
+        "lgwName": {
+            "defaultValue": "lgw-home",
+            "type": "String",
+            "metadata": {
+                "description": "The name of the local gateway"
+            }    
+        },
+
+        "localNetworkCidr": {
+            "defaultValue": "192.168.2.0/24",
+            "type": "string",
+            "metadata": {
+                "description": "The address prefix of your home/office"
+            }
+        },
+
+        "localGatewayVip": {
+            "type": "string",
+            "metadata": {
+                "description": "The public IP address of your home/office.  Use a service like https://icanhazip.com/ if unsure"
+            }
+        },
+
+        "provisionTestVm": {
+            "defaultValue": true,
+            "type": "bool",
+            "metadata": {
+                "description": "Indicate if the optional test VM and related resources should be provisioned. It is useful for quick connectivity testing, eg. performing a ping tests between the networks"
+            }
+        },
+
+        "vmName": {
+            "defaultValue": "vm-echo",
+            "type": "string"
+        },
+
+        "vmAdminUsername": {
+            "defaultValue": "azureuser",
+            "type": "string"
+        },
+
+        "vmAdminPassword": {
+            "defaultValue": "YourSecureVmPassword9",
+            "type": "secureString"
+        },
+
+        "nsgMyVms": {
+            "defaultValue": "nsg-myvms",
+            "type": "String",
+            "metadata": {
+                "description": "Network security group that enables ping traffic for testing."
+            }                        
+        }
+    },
+
+    "variables": {
+        "location": "[resourceGroup().location]",
+        "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetMyVmsName'))]",
+        "vmNicName": "[concat('nic-', parameters('vmName'))]"
+    },    
+
+    "resources": [
+        {
+            "type": "Microsoft.Network/localNetworkGateways",
+            "apiVersion": "2020-05-01",
+            "name": "[parameters('lgwName')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "localNetworkAddressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('localNetworkCidr')]"
+                    ]
+                },
+                "gatewayIpAddress": "[parameters('localGatewayVip')]"
+            }
+        },
+        {
+            "condition": "[parameters('provisionTestVm')]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2020-05-01",
+            "name": "[parameters('nsgMyVms')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "ICMP",
+                        "properties": {
+                            "description": "Allow ICMP for ping commands",
+                            "protocol": "ICMP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2020-05-01",
+            "name": "[parameters('pipVgwName')]",
+            "location": "[variables('location')]",
+            "sku": {
+                "name": "Basic"
+            },
+            "properties": {
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Dynamic",
+                "idleTimeoutInMinutes": 4,
+                "ipTags": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+            "apiVersion": "2020-05-01",
+            "name": "[concat(parameters('nsgMyVms'), '/ICMP')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgMyVms'))]"
+            ],
+            "properties": {
+                "description": "Allow ICMP for ping commands",
+                "protocol": "ICMP",
+                "sourcePortRange": "*",
+                "destinationPortRange": "*",
+                "sourceAddressPrefix": "Internet",
+                "destinationAddressPrefix": "VirtualNetwork",
+                "access": "Allow",
+                "priority": 100,
+                "direction": "Inbound",
+                "sourcePortRanges": [],
+                "destinationPortRanges": [],
+                "sourceAddressPrefixes": [],
+                "destinationAddressPrefixes": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2020-05-01",
+            "name": "[parameters('vnetName')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgMyVms'))]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('vnetCidr')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('subnetMyVmsName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('subnetMyVmsCidr')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgMyVms'))]"
+                            },
+                            "serviceEndpoints": [],
+                            "delegations": [],
+                            "privateEndpointNetworkPolicies": "Enabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
+                    },
+                    {
+                        "name": "GatewaySubnet",
+                        "properties": {
+                            "addressPrefix": "[parameters('subnetGatewayCidr')]",
+                            "serviceEndpoints": [],
+                            "delegations": [],
+                            "privateEndpointNetworkPolicies": "Enabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
+                    }
+                ],
+                "virtualNetworkPeerings": [],
+                "enableDdosProtection": false,
+                "enableVmProtection": false
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2020-05-01",
+            "name": "[concat(parameters('vnetName'), '/GatewaySubnet')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+            ],
+            "properties": {
+                "addressPrefix": "[parameters('subnetGatewayCidr')]",
+                "serviceEndpoints": [],
+                "delegations": [],
+                "privateEndpointNetworkPolicies": "Enabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+            }
+        },
+        {
+            "type": "Microsoft.Network/connections",
+            "apiVersion": "2020-05-01",
+            "name": "[parameters('s2sTunnelName')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworkGateways', parameters('vgwName'))]",
+                "[resourceId('Microsoft.Network/localNetworkGateways', parameters('lgwName'))]"
+            ],
+            "properties": {
+                "virtualNetworkGateway1": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworkGateways', parameters('vgwName'))]"
+                },
+                "localNetworkGateway2": {
+                    "id": "[resourceId('Microsoft.Network/localNetworkGateways', parameters('lgwName'))]"
+                },
+                "connectionType": "IPsec",
+                "sharedKey": "[parameters('ipSecSharedKey')]",
+                "connectionProtocol": "IKEv2",
+                "routingWeight": 0,
+                "enableBgp": false,
+                "useLocalAzureIpAddress": false,
+                "usePolicyBasedTrafficSelectors": false,
+                "ipsecPolicies": [],
+                "trafficSelectorPolicies": [],
+                "expressRouteGatewayBypass": false,
+                "dpdTimeoutSeconds": 0
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworkGateways",
+            "apiVersion": "2020-05-01",
+            "name": "[parameters('vgwName')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', parameters('pipVgwName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), 'GatewaySubnet')]"
+            ],
+            "properties": {
+                "enablePrivateIpAddress": false,
+                "ipConfigurations": [
+                    {
+                        "name": "GwIpConfig",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('pipVgwName'))]"
+                            },
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), 'GatewaySubnet')]"
+                            }
+                        }
+                    }
+                ],
+                "sku": {
+                    "name": "[parameters('vgwSku')]",
+                    "tier": "[parameters('vgwSku')]"
+                },
+                "gatewayType": "Vpn",
+                "vpnType": "RouteBased",
+                "enableBgp": false,
+                "activeActive": false,
+                "vpnGatewayGeneration": "Generation1"
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2020-05-01",
+            "name": "[concat(parameters('vnetName'), '/snet-myvms')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgMyVms'))]"
+            ],
+            "properties": {
+                "addressPrefix": "[parameters('subnetMyVmsCidr')]",
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgMyVms'))]"
+                },
+                "serviceEndpoints": [],
+                "delegations": [],
+                "privateEndpointNetworkPolicies": "Enabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+            }
+        },
+        {
+            "condition": "[parameters('provisionTestVm')]",
+            "name": "[variables('vmNicName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-07-01",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "condition": "[parameters('provisionTestVm')]",
+            "name": "[parameters('vmName')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2020-06-01",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', variables('vmNicName'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "Standard_B1ls"
+                },
+                "storageProfile": {
+                    "osDisk": {
+                        "createOption": "fromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        }
+                    },
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "18.04-LTS",
+                        "version": "latest"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[parameters('vmName')]",
+                    "adminUsername": "[parameters('vmAdminUsername')]",
+                    "adminPassword": "[parameters('vmAdminPassword')]"
+                }
+            }
+        }               
+    ] 
+}
