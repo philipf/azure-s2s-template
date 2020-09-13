@@ -1,18 +1,21 @@
 #!/bin/sh
 #
+# Installs and condfigures Libreswan to connect an Azure Virtual Network Gateway.
+# See: https://blog.notnot.ninja/2020/09/12/azure-site-to-site-vpn/
+#
 # This script should be run via curl:
-#   sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+#   sudo sh -c "$(curl -fsSL https://raw.githubusercontent.com/philipf/azure-s2s-template/master/install.sh)"
 # or via wget:
-#   sh -c "$(wget -qO- https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+#   sudo sh -c "$(wget -qO- https://raw.githubusercontent.com/philipf/azure-s2s-template/master/install.sh)"
 # or via fetch:
-#   sh -c "$(fetch -o - https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+#   sudo sh -c "$(fetch -o - https://raw.githubusercontent.com/philipf/azure-s2s-template/master/install.sh)"
 #
 # As an alternative, you can first download the install script and run it afterwards:
-#   wget https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh
-#   sh install.sh
+#   wget https://raw.githubusercontent.com/philipf/azure-s2s-template/master/install.sh
+#   sudo sh install.sh
 #
 
-# Stops the execution of a script if a command or pipeline has an erro
+# Stops the execution of a script if a command or pipeline has an error
 set -e
 
 # Default settings
@@ -61,7 +64,7 @@ main() {
     tar -xzvf v3.32.tar.gz
     cd libreswan-3.32/
 
-
+    # Included the deprecated Diffie-Hellman group 2 (modp1024)
     export USE_DH2=true
     export USE_FIPSCHECK=false
     export USE_DNSSEC=false    
@@ -97,6 +100,8 @@ END
     systemctl enable ipsec.service
     systemctl start ipsec.service
     systemctl status ipsec.service
+
+    printf "Completed successfully\n"
 }
 
 main "$@"
