@@ -7,7 +7,7 @@ This a companion guide to the blog post [Build a DevTest Azure Site-to-Site VPN 
 
 ## Deploy to Azure
 
-<a target="_blank" href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3a%2f%2fraw.githubusercontent.com%2fphilipf%2fazure-s2s-template%2fmaster%2ftemplate.json"> 
+<a target="_blank" href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3a%2f%2fraw.githubusercontent.com%2fphilipf%2fazure-s2s-template%2fmaster%2ftemplate.json">   
   <img src="https://aka.ms/deploytoazurebutton" alt="Deploy to Azure">
 </a>
 
