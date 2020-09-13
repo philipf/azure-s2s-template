@@ -7,7 +7,10 @@ This a companion guide to the blog post [Build a DevTest Azure Site-to-Site VPN 
 
 ## Deploy to Azure
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3a%2f%2fraw.githubusercontent.com%2fphilipf%2fazure-s2s-template%2fmaster%2ftemplate.json){:target="_blank"}
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3a%2f%2fraw.githubusercontent.com%2fphilipf%2fazure-s2s-template%2fmaster%2ftemplate.json" rel="nofollow" target="_blank">   
+  <img src="https://aka.ms/deploytoazurebutton" alt="Deploy to Azure">
+</a>
+
 
 
 ## Install Libreswan on a clean Ubuntu 20.04
