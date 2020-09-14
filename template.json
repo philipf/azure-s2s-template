@@ -108,10 +108,11 @@
         },
 
         "provisionTestVm": {
-            "defaultValue": false,
-            "type": "bool",
+            "defaultValue": "Yes",
+            "type": "string",
+            "allowedValues": ["Yes", "No"],
             "metadata": {
-                "description": "Indicate if the optional test VM and related resources should be provisioned. It is useful for quick connectivity testing, eg. performing a ping tests between the networks"
+                "description": "Indicates if the optional test VM and related resources should be provisioned. It is useful for quick connectivity testing, eg. performing a ping tests between the networks"
             }
         },
 
@@ -140,6 +141,7 @@
     },
 
     "variables": {
+        "testVm": "[equals(parameters('provisionTestVm'),'Yes')]",
         "location": "[resourceGroup().location]",
         "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetMyVmsName'))]",
         "vmNicName": "[concat('nic-', parameters('vmName'))]"
@@ -161,7 +163,6 @@
             }
         },
         {
-            "condition": "[parameters('provisionTestVm')]",
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2020-05-01",
             "name": "[parameters('nsgMyVms')]",
@@ -371,7 +372,7 @@
             }
         },
         {
-            "condition": "[parameters('provisionTestVm')]",
+            "condition": "[variables('testVm')]",
             "name": "[variables('vmNicName')]",
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2019-07-01",
@@ -394,7 +395,7 @@
             }
         },
         {
-            "condition": "[parameters('provisionTestVm')]",
+            "condition": "[variables('testVm')]",
             "name": "[parameters('vmName')]",
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2020-06-01",
