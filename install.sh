@@ -36,6 +36,7 @@ main() {
     
     apt update
 
+    # Install the build dependencies for Libreswan
     apt install -y \
         libnss3-dev \
         libnspr4-dev \
@@ -57,6 +58,7 @@ main() {
         libsystemd-dev \
         gawk 
 
+    # Install to download Libreswan source
     apt install -y wget
 
     wget https://github.com/libreswan/libreswan/archive/v3.32.tar.gz
@@ -73,6 +75,7 @@ main() {
     make base
     make install-base
 
+# Create connection definition to Azure
 cat <<END > /etc/ipsec.d/azure.conf
 conn azureTunnel
     authby=secret
@@ -94,9 +97,12 @@ conn azureTunnel
     type=tunnel
 END
 
+# Create secrets file with pre-shared key
 cat <<END > /etc/ipsec.d/azure.secrets
 %any %any : PSK "$psk"
 END
+
+    # Enable and status the IPsec service
     systemctl enable ipsec.service
     systemctl start ipsec.service
     systemctl status ipsec.service
