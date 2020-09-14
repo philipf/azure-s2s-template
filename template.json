@@ -93,7 +93,7 @@
         },
 
         "localNetworkCidr": {
-            "defaultValue": "192.168.2.0/24",
+            "defaultValue": "192.168.1.0/24",
             "type": "string",
             "metadata": {
                 "description": "The address prefix of your home/office"
