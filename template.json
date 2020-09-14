@@ -108,7 +108,7 @@
         },
 
         "provisionTestVm": {
-            "defaultValue": true,
+            "defaultValue": false,
             "type": "bool",
             "metadata": {
                 "description": "Indicate if the optional test VM and related resources should be provisioned. It is useful for quick connectivity testing, eg. performing a ping tests between the networks"
