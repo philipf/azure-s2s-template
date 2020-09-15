@@ -117,7 +117,7 @@
         },
 
         "vmName": {
-            "defaultValue": "vm-echo",
+            "defaultValue": "vm-echo-dev",
             "type": "string"
         },
 
