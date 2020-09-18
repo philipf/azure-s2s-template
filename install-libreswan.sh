@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Installs and condfigures Libreswan to connect an Azure Virtual Network Gateway.
+# Installs and configures Libreswan to connect an Azure VPN Gateway.
 # See: https://blog.notnot.ninja/2020/09/12/azure-site-to-site-vpn/
 #
 # This script should be run via curl:
@@ -15,7 +15,6 @@
 #   sudo sh install.sh
 #
 
-# Stops the execution of a script if a command or pipeline has an error
 set -e
 
 main() {
@@ -29,7 +28,7 @@ main() {
     read -p 'Local network [192.168.2.0/24]: ' right_subnet
     right_subnet=${right_subnet:-192.168.2.0/24}
 
-    read -p 'Pre-shared key: ' psk
+    read -p 'Pre-shared key: ' psk # <1>
     
     apt update
 
@@ -64,9 +63,9 @@ main() {
     cd libreswan-3.32/
 
     # Include the deprecated Diffie-Hellman group 2 (modp1024) as required by Azure's Basic SKU
-    export USE_DH2=true
-    export USE_FIPSCHECK=false
-    export USE_DNSSEC=false    
+    export USE_DH2=true # <2>
+    export USE_FIPSCHECK=false # <3>
+    export USE_DNSSEC=false # <3>   
 
     make clean
     make base
@@ -107,4 +106,4 @@ END
     printf "Completed successfully\n"
 }
 
-main "$@"
+main 
