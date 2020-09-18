@@ -4,11 +4,11 @@
 # See: https://blog.notnot.ninja/2020/09/12/azure-site-to-site-vpn/
 #
 # This script should be run via curl:
-#   sudo sh -c "$(curl -fsSL https://raw.githubusercontent.com/philipf/azure-s2s-template/master/install.sh)"
+#   sudo sh -c "$(curl -fsSL https://raw.githubusercontent.com/philipf/azure-s2s-template/master/install-libreswan.sh)"
 # or via wget:
-#   sudo sh -c "$(wget -qO- https://raw.githubusercontent.com/philipf/azure-s2s-template/master/install.sh)"
+#   sudo sh -c "$(wget -qO- https://raw.githubusercontent.com/philipf/azure-s2s-template/master/install-libreswan.sh)"
 # or via fetch:
-#   sudo sh -c "$(fetch -o - https://raw.githubusercontent.com/philipf/azure-s2s-template/master/install.sh)"
+#   sudo sh -c "$(fetch -o - https://raw.githubusercontent.com/philipf/azure-s2s-template/master/install-libreswan.sh)"
 #
 # As an alternative, you can first download the install script and run it afterwards:
 #   wget https://raw.githubusercontent.com/philipf/azure-s2s-template/master/install.sh
@@ -17,9 +17,6 @@
 
 # Stops the execution of a script if a command or pipeline has an error
 set -e
-
-# Default settings
-
 
 main() {
     echo 'Install Libreswan for an Azure site-to-site VPN'
@@ -58,7 +55,7 @@ main() {
         libsystemd-dev \
         gawk 
 
-    # Install to download Libreswan source
+    # Install wget to download Libreswan source
     apt install -y wget
 
     wget https://github.com/libreswan/libreswan/archive/v3.32.tar.gz
@@ -66,7 +63,7 @@ main() {
     tar -xzvf v3.32.tar.gz
     cd libreswan-3.32/
 
-    # Included the deprecated Diffie-Hellman group 2 (modp1024)
+    # Include the deprecated Diffie-Hellman group 2 (modp1024) as required by Azure's Basic SKU
     export USE_DH2=true
     export USE_FIPSCHECK=false
     export USE_DNSSEC=false    
@@ -75,7 +72,7 @@ main() {
     make base
     make install-base
 
-# Create connection definition to Azure
+# Create the connection definition to Azure
 cat <<END > /etc/ipsec.d/azure.conf
 conn azureTunnel
     authby=secret
@@ -97,12 +94,12 @@ conn azureTunnel
     type=tunnel
 END
 
-# Create secrets file with pre-shared key
+# Create secrets file with a pre-shared key
 cat <<END > /etc/ipsec.d/azure.secrets
 %any %any : PSK "$psk"
 END
 
-    # Enable and status the IPsec service
+    # Enable and start the IPsec service
     systemctl enable ipsec.service
     systemctl start ipsec.service
     systemctl status ipsec.service
