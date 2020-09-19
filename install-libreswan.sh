@@ -25,8 +25,8 @@ main() {
     read -p 'Azure VNet [192.168.3.0/24]: ' left_subnet
     left_subnet=${left_subnet:-192.168.3.0/24}
 
-    read -p 'Local network [192.168.2.0/24]: ' right_subnet
-    right_subnet=${right_subnet:-192.168.2.0/24}
+    read -p 'Local network [192.168.1.0/24]: ' right_subnet
+    right_subnet=${right_subnet:-192.168.1.0/24}
 
     read -p 'Pre-shared key: ' psk # <1>
     

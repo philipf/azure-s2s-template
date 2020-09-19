@@ -103,5 +103,5 @@ New-AzVirtualNetworkGatewayConnection `
   -VirtualNetworkGateway1 $Vgw `
   -LocalNetworkGateway2 $Lgw `
   -Location $Location `
-  -ConnectionType IPsec 
+  -ConnectionType IPsec `
   -SharedKey $SharedKey
