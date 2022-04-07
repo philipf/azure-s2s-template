@@ -1,7 +1,6 @@
 # azure-s2s-template
 
-This a companion guide to the blog post [Build a DevTest Azure Site-to-Site VPN on a Linux VM](https://blog.notnot.ninja/2020/09/12/azure-site-to-site-vpn/)
-
+This a companion guide to the blog post [Build a DevTest Azure Site-to-Site VPN on a Linux VM](https://blog.notnot.ninja/2020/09/19/azure-site-to-site-vpn/)
 
 ## Deploy to Azure
 
